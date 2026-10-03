@@ -109,7 +109,12 @@ export function Header({ account }: { account: React.ReactNode }) {
                   <Link href={item.href} className="text-[32px] text-ink">{item.label}</Link>
                 </motion.div>
               ))}
-              <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="pt-4">{account}</motion.div>
+              <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }} className="flex items-center justify-between gap-4 pt-4">
+                {account}
+                <Link href="/app" className="inline-flex h-10 items-center rounded-full bg-ink px-5 text-[12px] font-bold uppercase tracking-[0.08em] text-paper">
+                  Get the app
+                </Link>
+              </motion.div>
             </motion.nav>
           </motion.div>
         ) : null}

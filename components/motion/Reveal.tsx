@@ -6,7 +6,7 @@ import { useEffect, useRef } from "react";
 // The hidden state only applies once <html> has the `js` class (set by an inline
 // script, and skipped for reduced motion), so content is visible without JavaScript.
 
-type Tag = "div" | "li" | "ul" | "section" | "article";
+type Tag = "div" | "li" | "ul" | "ol" | "section" | "article";
 type Props = { children: React.ReactNode; className?: string; delay?: number; as?: Tag; distance?: number };
 
 function useInView<T extends HTMLElement>(onEnter: (el: T) => void) {

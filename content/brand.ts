@@ -26,6 +26,7 @@ export const footer = {
     { label: "About Us", href: "/about" },
     { label: "Reviews", href: "/#reviews" },
     { label: "FAQ", href: "/faq" },
+    { label: "Get the Android app", href: "/app" },
   ],
   company: [
     { label: "Contact Us", href: "/contact" },
