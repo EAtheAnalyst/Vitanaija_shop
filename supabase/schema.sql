@@ -92,6 +92,14 @@ create table if not exists reviews (
   created_at timestamptz not null default now()
 );
 
+-- Synced carts for signed-in customers, shared by web and mobile (also in migrations/002_carts.sql).
+create table if not exists carts (
+  email text primary key,
+  items jsonb not null default '[]'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+alter table carts enable row level security;
 alter table customers enable row level security;
 alter table products enable row level security;
 alter table orders enable row level security;

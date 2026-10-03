@@ -1,9 +1,31 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Product, Tint } from "@/content/types";
 
 export type CartLine = { slug: string; name: string; subtitle: string; price: number; tint: Tint; count: number; qty: number };
+
+type ServerCart = { items: { slug: string; qty: number; product: Product }[] };
+
+const toLine = (p: Product, qty: number): CartLine => ({ slug: p.slug, name: p.name, subtitle: p.subtitle, price: p.price, tint: p.tint, count: p.count, qty });
+
+/** Local + server merge: the larger quantity wins, so syncing twice never doubles a line. */
+function mergeCarts(local: CartLine[], server: ServerCart): CartLine[] {
+  const out = new Map<string, CartLine>();
+  for (const i of server.items) out.set(i.slug, toLine(i.product, i.qty));
+  for (const l of local) {
+    const s = out.get(l.slug);
+    out.set(l.slug, s ? { ...s, qty: Math.max(s.qty, l.qty) } : l);
+  }
+  return [...out.values()];
+}
+
+const putCart = (lines: CartLine[]) =>
+  fetch("/api/v1/cart", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ items: lines.map((l) => ({ slug: l.slug, qty: l.qty })) }),
+  });
 
 type CartState = {
   lines: CartLine[];
@@ -23,11 +45,13 @@ const CartContext = createContext<CartState | null>(null);
 const KEY = "vn-cart-v1";
 export const MAX_QTY = 20;
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+/** @param syncEmail the signed-in customer's email; when set, the cart syncs with /api/v1/cart (shared with the app). */
+export function CartProvider({ children, syncEmail = null }: { children: React.ReactNode; syncEmail?: string | null }) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [ready, setReady] = useState(false);
   const [open, setOpen] = useState(false);
   const [pulse, setPulse] = useState(0);
+  const synced = useRef(false);
 
   useEffect(() => {
     try {
@@ -47,6 +71,37 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       /* ignore */
     }
   }, [lines, ready]);
+
+  // Signed in: pull the server cart once, merge it with this device's cart, and push the result.
+  useEffect(() => {
+    if (!ready || !syncEmail || synced.current) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/v1/cart", { cache: "no-store" });
+        if (!res.ok || cancelled) return;
+        const server = (await res.json()) as ServerCart;
+        setLines((local) => {
+          const merged = mergeCarts(local, server);
+          void putCart(merged);
+          return merged;
+        });
+        synced.current = true;
+      } catch {
+        /* offline: keep the local cart, try again on the next page load */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, syncEmail]);
+
+  // After the first sync, push every change (debounced) so the app sees it.
+  useEffect(() => {
+    if (!ready || !syncEmail || !synced.current) return;
+    const t = setTimeout(() => void putCart(lines).catch(() => undefined), 600);
+    return () => clearTimeout(t);
+  }, [lines, ready, syncEmail]);
 
   const add = useCallback((p: Product, qty = 1) => {
     setLines((prev) => {

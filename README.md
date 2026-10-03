@@ -13,6 +13,12 @@ and the Shopping Website PRD.
 Without any keys the site still runs: data goes to `.data/db.json`, emails print to the terminal,
 and Google sign-in shows a "not set up yet" note. Add keys one at a time as you get them.
 
+**Mobile app backend:** this site also serves the Android app (`../vitanaija-mobile`) through
+`/api/v1/*`, and handles its Google sign-in at `/mobile/auth`. Web and app share one database,
+one order pipeline (`lib/orders.ts`) and, for signed-in customers, one cart. That needs
+`supabase/migrations/002_carts.sql` to be run once. See the mobile README for the full API table.
+Optional env: `MOBILE_ALLOW_EXPO_GO=true` lets Expo Go sign in against the live site while testing.
+
 ## Run locally
 
 ```bash

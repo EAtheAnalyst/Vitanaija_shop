@@ -2,7 +2,7 @@ import "server-only";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { Product, Review } from "@/content/types";
 import { env } from "@/lib/env";
-import type { Order, Store } from "./types";
+import type { CartItem, Order, Store } from "./types";
 
 let client: SupabaseClient | null = null;
 const db = () =>
@@ -124,5 +124,23 @@ export const supabaseStore: Store = {
       await db().from("reviews").select("id, name, city, rating, text").eq("approved", true).order("created_at", { ascending: false }).limit(12),
     );
     return rows as Review[];
+  },
+
+  async getCart(email) {
+    const row = check(
+      await db().from("carts").select("items, updated_at").eq("email", email.toLowerCase()).maybeSingle(),
+    ) as { items: CartItem[]; updated_at: string } | null;
+    return row ? { items: row.items ?? [], updatedAt: row.updated_at } : { items: [], updatedAt: null };
+  },
+
+  async saveCart(email, items) {
+    const row = check(
+      await db()
+        .from("carts")
+        .upsert({ email: email.toLowerCase(), items, updated_at: new Date().toISOString() }, { onConflict: "email" })
+        .select("items, updated_at")
+        .single(),
+    ) as { items: CartItem[]; updated_at: string };
+    return { items: row.items, updatedAt: row.updated_at };
   },
 };

@@ -8,4 +8,4 @@ if (isProd && !hasSupabase && process.env.NEXT_PHASE !== "phase-production-build
 }
 
 export const store = hasSupabase ? supabaseStore : localStore;
-export type { Order, OrderItem, OrderStatus } from "./types";
+export type { CartItem, Order, OrderItem, OrderStatus, SavedCart } from "./types";

@@ -8,6 +8,7 @@ import { CartDrawer } from "@/components/commerce/CartDrawer";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { AccountLink } from "@/components/layout/AccountLink";
+import { auth } from "@/auth";
 import "./globals.css";
 
 const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans", display: "swap" });
@@ -25,7 +26,8 @@ export const viewport: Viewport = { themeColor: "#cdebe1" };
 // reveal styles. Without JS the content is simply visible.
 const bootScript = `try{if(!matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('js')}catch(e){}`;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth().catch(() => null);
   return (
     <html lang="en-NG" className={dmSans.variable} suppressHydrationWarning>
       <head>
@@ -35,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-ink focus:px-5 focus:py-3 focus:text-paper">
           Skip to content
         </a>
-        <CartProvider>
+        <CartProvider syncEmail={session?.user?.email ?? null}>
           <SmoothScroll>
             <Header account={<AccountLink />} />
             <main id="main">{children}</main>

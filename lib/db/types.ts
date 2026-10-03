@@ -30,6 +30,10 @@ export type Order = NewOrder & {
 
 export type CustomerInput = { email: string; name: string | null; image: string | null; googleId: string | null };
 
+/** A signed-in customer's cart, shared between web and mobile. Only slugs + quantities are stored. */
+export type CartItem = { slug: string; qty: number };
+export type SavedCart = { items: CartItem[]; updatedAt: string | null };
+
 export interface Store {
   listProducts(): Promise<Product[]>;
   getProduct(slug: string): Promise<Product | null>;
@@ -42,4 +46,6 @@ export interface Store {
   addSubscriber(email: string, source: string): Promise<"created" | "exists">;
   addMessage(m: { name: string; email: string; message: string }): Promise<void>;
   listApprovedReviews(): Promise<Review[]>;
+  getCart(email: string): Promise<SavedCart>;
+  saveCart(email: string, items: CartItem[]): Promise<SavedCart>;
 }

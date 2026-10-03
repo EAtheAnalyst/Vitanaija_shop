@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { products } from "@/content/products";
-import type { Order, Store } from "./types";
+import type { Order, SavedCart, Store } from "./types";
 
 // Development fallback used when Supabase keys are not set.
 // Stores data in .data/db.json so the full checkout flow can be tested locally.
@@ -13,6 +13,7 @@ type LocalData = {
   customers: { id: string; email: string; name: string | null; image: string | null; googleId: string | null }[];
   subscribers: { email: string; source: string; createdAt: string }[];
   messages: { name: string; email: string; message: string; createdAt: string }[];
+  carts?: Record<string, SavedCart>;
 };
 
 const file = path.join(process.cwd(), ".data", "db.json");
@@ -90,5 +91,15 @@ export const localStore: Store = {
   },
   async listApprovedReviews() {
     return [];
+  },
+  async getCart(email) {
+    return load().carts?.[email.toLowerCase()] ?? { items: [], updatedAt: null };
+  },
+  async saveCart(email, items) {
+    const data = load();
+    const cart: SavedCart = { items, updatedAt: new Date().toISOString() };
+    data.carts = { ...(data.carts ?? {}), [email.toLowerCase()]: cart };
+    save(data);
+    return cart;
   },
 };
